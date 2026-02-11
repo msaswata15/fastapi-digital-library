@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -43,6 +44,7 @@ func (h *BookHandler) create(c *gin.Context) {
 	if h.queue != nil {
 		h.queue.Enqueue(Task{Type: "index_book", Payload: created})
 	}
+	setProcessTimeHeader(c)
 	c.JSON(http.StatusOK, created)
 }
 
@@ -58,6 +60,7 @@ func (h *BookHandler) getByID(c *gin.Context) {
 		writeError(c, status, err.Error())
 		return
 	}
+	setProcessTimeHeader(c)
 	c.JSON(http.StatusOK, book)
 }
 
@@ -67,6 +70,7 @@ func (h *BookHandler) getAll(c *gin.Context) {
 		writeError(c, http.StatusInternalServerError, "failed to fetch books")
 		return
 	}
+	setProcessTimeHeader(c)
 	c.JSON(http.StatusOK, books)
 }
 
@@ -81,6 +85,7 @@ func (h *BookHandler) delete(c *gin.Context) {
 		writeError(c, status, err.Error())
 		return
 	}
+	setProcessTimeHeader(c)
 	c.JSON(http.StatusOK, gin.H{"message": "Book removed successfully"})
 }
 
@@ -105,6 +110,7 @@ func (h *BookHandler) update(c *gin.Context) {
 		writeError(c, status, err.Error())
 		return
 	}
+	setProcessTimeHeader(c)
 	c.JSON(http.StatusOK, updated)
 }
 
@@ -119,6 +125,18 @@ func mapError(err error) int {
 	}
 }
 
+// setProcessTimeHeader computes elapsed time from the startTime set in middleware
+// and writes it to the X-Process-Time response header before the body is sent.
+func setProcessTimeHeader(c *gin.Context) {
+	if v, ok := c.Get("startTime"); ok {
+		if start, ok2 := v.(time.Time); ok2 {
+			elapsed := time.Since(start)
+			c.Header("X-Process-Time", elapsed.String())
+		}
+	}
+}
+
 func writeError(c *gin.Context, status int, msg string) {
+	setProcessTimeHeader(c)
 	c.JSON(status, gin.H{"error": msg})
 }
