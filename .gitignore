@@ -1,2 +1,6 @@
 __pycache__
 venv
+go.mod
+go.sum
+.air.toml
+tmp/
