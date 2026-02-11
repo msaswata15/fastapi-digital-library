@@ -7,4 +7,3 @@ var (
 	ErrConflict   = errors.New("conflict")
 	ErrValidation = errors.New("validation error")
 )
-
